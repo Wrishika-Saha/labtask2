@@ -1,0 +1,99 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cstring>
+
+using namespace std;
+
+// Function to check if a word is a data type
+bool isDataType(const string& word) {
+    const char* types[] = {"int", "float", "char", "double", "long", "short", "bool", "void"};
+    for (int i = 0; i < 8; i++) {
+        if (word == types[i])
+            return true;
+    }
+    return false;
+}
+
+// Trim leading and trailing spaces
+string trim(const string& str) {
+    size_t start = str.find_first_not_of(" \t\r\n");
+    size_t end = str.find_last_not_of(" \t\r\n");
+    return (start == string::npos) ? "" : str.substr(start, end - start + 1);
+}
+
+// Check if it's a variable declaration
+bool isVariableDeclaration(const string& line) {
+    stringstream ss(line);
+    string type, name;
+    ss >> type;
+    if (!isDataType(type)) return false;
+
+    getline(ss, name); // Get the rest of the line
+    if (name.find('(') != string::npos) return false; // Not a function
+    if (line.find(';') != string::npos) return true;
+
+    return false;
+}
+
+// Check if it's a function declaration
+bool isFunctionDeclaration(const string& line) {
+    stringstream ss(line);
+    string type, name;
+    ss >> type;
+    if (!isDataType(type)) return false;
+
+    if (line.find('(') != string::npos &&
+        line.find(')') != string::npos &&
+        line.find(';') != string::npos) {
+        return true;
+    }
+    return false;
+}
+
+// Check if it's a function definition
+bool isFunctionDefinition(const string& line) {
+    stringstream ss(line);
+    string type, name;
+    ss >> type;
+    if (!isDataType(type)) return false;
+
+    if (line.find('(') != string::npos &&
+        line.find(')') != string::npos &&
+        line.find('{') != string::npos) {
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    ifstream file("sample.cpp");
+    string line;
+    int lineNum = 0;
+
+    if (!file) {
+        cerr << "❌ Failed to open file." << endl;
+        return 1;
+    }
+
+    cout << "Analyzing source code...\n\n";
+
+    while (getline(file, line)) {
+        lineNum++;
+        string trimmed = trim(line);
+        if (trimmed.empty()) continue;
+
+        if (isVariableDeclaration(trimmed)) {
+            cout << "Line " << lineNum << ": ✅ Variable declaration found.\n";
+        } else if (isFunctionDeclaration(trimmed)) {
+            cout << "Line " << lineNum << ": ✅ Function declaration found.\n";
+        } else if (isFunctionDefinition(trimmed)) {
+            cout << "Line " << lineNum << ": ✅ Function definition found.\n";
+        }
+    }
+
+    file.close();
+    return 0;
+}
+
